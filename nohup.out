@@ -1,0 +1,31 @@
+module.js:472
+    throw err;
+    ^
+
+Error: Cannot find module 'express'
+    at Function.Module._resolveFilename (module.js:470:15)
+    at Function.Module._load (module.js:418:25)
+    at Module.require (module.js:498:17)
+    at require (internal/module.js:20:19)
+    at Object.<anonymous> (/home/ubuntu/apps/Miles/server.js:1:79)
+    at Module._compile (module.js:571:32)
+    at Object.Module._extensions..js (module.js:580:10)
+    at Module.load (module.js:488:32)
+    at tryModuleLoad (module.js:447:12)
+    at Function.Module._load (module.js:439:3)
+/home/ubuntu/apps/Miles/server.js:14
+app.use('/api', router);
+                ^
+
+ReferenceError: router is not defined
+    at Object.<anonymous> (/home/ubuntu/apps/Miles/server.js:14:17)
+    at Module._compile (module.js:571:32)
+    at Object.Module._extensions..js (module.js:580:10)
+    at Module.load (module.js:488:32)
+    at tryModuleLoad (module.js:447:12)
+    at Function.Module._load (module.js:439:3)
+    at Module.runMain (module.js:605:10)
+    at run (bootstrap_node.js:423:7)
+    at startup (bootstrap_node.js:147:9)
+    at bootstrap_node.js:538:3
+listening on port 3000
