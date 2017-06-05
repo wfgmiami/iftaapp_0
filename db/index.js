@@ -24,7 +24,7 @@ const decodePoints = (body, cb) => {
  	let numSteps = result.routes[0].legs[0].steps.length;
  	let legs = result.routes[0].legs[0];
 	let startPoint = result.routes[0].legs[0].start_location;
-    let endPoint = result.routes[0].legs[0].end_location;
+  let endPoint = result.routes[0].legs[0].end_location;
 	let checkPoint = [];
 	let stateMiles = [];
 	let coordinates = [];
@@ -70,25 +70,25 @@ const decodePoints = (body, cb) => {
 				lat += latitude_change;
 				lng += longitude_change;
 				coordinates.push({ lat: lat/factor, lng: lng/factor });
-			
+
 			}
 		}
 
-		let arraySize = 100;	
+		let arraySize = 100;
 		let loopCount = Math.floor(coordinates.length / arraySize);
 		let remainder = coordinates.length % arraySize;
-		if(remainder) loopCount++;
+		if ( remainder ) loopCount++;
 		let startCount = 0;
 		let adjustedCoordinates = [];
 		let newArray = [];
-		
+
 
 		for (let i = 0; i < loopCount; i++){
-			
+
 			newArray.push(coordinates.slice(startCount, arraySize + startCount));
-											
+
 			startCount += arraySize;
-			if(i == loopCount - 1 && remainder) startCount += remainder;		
+			if(i == loopCount - 1 && remainder) startCount += remainder;
 		}
 
 		newArray.forEach( array => {
@@ -97,11 +97,11 @@ const decodePoints = (body, cb) => {
 					arr = (`${ points.lng } ${ points.lat },`);
 				}else{
 					arr = arr + ' ' + (`${ points.lng } ${ points.lat },`);
-				}	
+				}
 				return arr;
 			},{}).slice(0,-1);
 
-			adjustedCoordinates.push(arrayElement);		
+			adjustedCoordinates.push(arrayElement);
 
 		});
 
@@ -113,10 +113,10 @@ const decodePoints = (body, cb) => {
 			}else{
 				 console.log(err);
 			}
-		})	
+		})
 
 		const produceStatesAndPoints = ( statesAndPoints ) => {
-			
+
 			let newArray = '';
 			let combinedArray = [];
 			let statesWithPoints = [];
@@ -128,23 +128,23 @@ const decodePoints = (body, cb) => {
 				newArray = statesAndPoints[0].states[i] + statesAndPoints[0].states[i+1];
 				combinedArray.push(newArray);
 			}
-			
-			
-			
+
+
+
 			for (let i = 0; i < combinedArray.length; i++ ){
 				obj = { states: combinedArray[i], points: statesAndPoints[0].points[i] }
 				statesWithPoints.push(obj);
 			}
-			
-			
+
+
 			newArray = '';
 			combinedArray = [];
-			
+
 			for (let i = 0; i < statesAndPoints[0].allStates.length; i+=2 ){
 				newArray = statesAndPoints[0].allStates[i] + statesAndPoints[0].allStates[i+1];
 				combinedArray.push(newArray);
 			}
-			
+
 			for (let i = 0; i < combinedArray.length; i++){
 				for (j = 0; j < statesWithPoints.length; j++){
 					if (combinedArray[i] === statesWithPoints[j].states){
@@ -152,18 +152,18 @@ const decodePoints = (body, cb) => {
 					}
 				}
 			}
-			
+
 			for (let i = 0; i < finalArray.length; i++){
 				let separateStates = [];
 				let separatePoints = finalArray[i].points.split(' ');
-		
+
 				stateMiles.push( { state: startState, coordinates: [ startPoint, { lng: separatePoints[0], lat: separatePoints[1] } ] })
 				separateStates.push(finalArray[i].states.slice(0,2))
 				separateStates.push(finalArray[i].states.slice(2));
-			
+
 				startState = separateStates.filter( state => state != startState );
 				startPoint = { lng: separatePoints[0], lat: separatePoints[1] };
-				
+
 				if (startState == endState){
 					  stateMiles.push({ state: endState, coordinates: [ startPoint, endPoint ] })
 				}
@@ -172,7 +172,7 @@ const decodePoints = (body, cb) => {
 			return stateMiles;
 		}
 
-  })	
+  })
 }
 
 
@@ -182,7 +182,7 @@ const findState = (coordinates, endState, cb) => {
 	let allStates = [];
 	let points = [];
 //	let queryString = `SELECT stusps FROM tl_2008_us_state WHERE ST_CONTAINS(wkb_geometry, ST_GeomFromText('point( ${ coordinates.lng } ${ coordinates.lat })',4269))`;
-	for (let i = 0; i < coordinates.length; i++){	
+	for (let i = 0; i < coordinates.length; i++){
 		let queryString = `SELECT DISTINCT name FROM ogrgeojson WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('LINESTRING( ${ coordinates[i] })', 4326))`;
 //	let queryString = `select ST_AsText(ST_Intersection(route.geom, state.wkb_geometry)) from (select 'SRID=4326;LINESTRING( ${ coordinates } )'::geometry as geom) as route, ogrgeojson as state`;
 
@@ -192,62 +192,62 @@ const findState = (coordinates, endState, cb) => {
 		client.query(queryString, (err,result) => {
 			if(err)
 				return cb(err);
-							
+
 			if(result.rows.length){
 				if(result.rows.length == 2){
-				
-					for(let j = 0; j < result.rows.length; j++){		
+
+					for(let j = 0; j < result.rows.length; j++){
 						allStates.push(result.rows[j].name)
-					}		
-			
+					}
+
 					binarySearch(coordinates[i].split(', '), result.rows, (err, result) => {
 						if(err)
 							return cb(err);
-				  	 
-					
+
+
 						for(let j = 0; j < result.states.length; j++){
 							states.push(result.states[j].name)
-						}		
-						
+						}
+
 						points.push(result.points);
 
 						if(allStates.length / 2 === points.length){
 //							console.log('in return.....')
 							stateMiles.push( { allStates, states, points } );
-							return cb(null, stateMiles);	
-						}	
-							
-					});					
+							return cb(null, stateMiles);
+						}
+
+					});
 				} else if(result.rows.length > 2){
 					console.log('more than 2 states......');
 					throw new Error('error > 2 states');
-			    }						
+			    }
 			}
 		})
-	}			
+	}
 }
 
 const binarySearch = (coordinates, states, cb) => {
 	//console.log(coordinates.length,coordinates)
-	if (coordinates.length === 2 || coordinates.length === 3)  
+	if (coordinates.length === 2 || coordinates.length === 3)
 		return cb(null, { states: states, points: coordinates[0] });
 	let half = Math.floor(coordinates.length / 2);
 	let halfArray = coordinates.slice(0, half);
-		
+
 
 	let queryString = `SELECT DISTINCT name FROM ogrgeojson WHERE ST_Intersects(wkb_geometry, ST_GeomFromText('LINESTRING( ${ halfArray })', 4326))`;
 //	console.log(queryString)
 	client.query(queryString, (err,result) => {
 		if(err)
 			return cb(err);
-	
-//		console.log('satest', states);		
+
+//		console.log('satest', states);
 		if(result.rows.length){
-			if(result.rows.length == 1){	
+			if(result.rows.length == 1){
 				return (null, binarySearch(coordinates.slice(half), states, cb));
 			}
 //			console.log('two states call first half',states);
-			return (null, binarySearch(halfArray, states, cb));	
+			return (null, binarySearch(halfArray, states, cb));
 		}
 	})
 
@@ -292,7 +292,7 @@ const pointInPolygon = (lat, lng, polygon) => {
   const n = polygon.length;
 
   let inside = false;
-   
+
   let p1x = polygon[0].lat;
   let p1y = polygon[0].lng;
 
@@ -317,8 +317,8 @@ const pointInPolygon = (lat, lng, polygon) => {
 	p1x = p2x;
 	p1y = p2y;
   }
-  
-  return inside; 	  
+
+  return inside;
 }
 
 
