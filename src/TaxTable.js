@@ -6,7 +6,7 @@ class TaxTable extends Component{
 		super();
 		this.state = {
 
-			mpg:[6],
+			mpg: 6,
 			taxPaidGallons:[],
 			taxableGallons:[],
 			netTaxableGallons:[],
@@ -24,12 +24,14 @@ class TaxTable extends Component{
 
 
 	onMpgAdd(ev){
-
-		(isNaN(ev.target.value)|| ev.target.value == 0) ? ev.target.value = "" : ev.target.value = Number((ev.target.value*1).toFixed(2));
+		let mpg = 0;
+		( isNaN(ev.target.value) || ev.target.value == 0 ) ? mpg = "" : mpg = Number((ev.target.value*1).toFixed(2));
 
 		for(let i = 0; i < this.props.milesTable.length; i++){
-			this.state.tableTaxRate[i] = this.state.taxRate[this.props.milesTable[i].state];
-			this.state.taxableGallons[i] = (this.props.milesTable[i].miles / ev.target.value == Infinity ? 0 : this.props.milesTable[i].miles / ev.target.value);
+			let taxRate = Number(this.state.taxRate.filter( obj => obj.state == this.props.milesTable[i].state )[0].tax);
+			//console.log(typeof(taxRate), typeof(mpg))
+			this.state.tableTaxRate[i] = taxRate;
+			this.state.taxableGallons[i] = (this.props.milesTable[i].miles / mpg == Infinity ? 0 : this.props.milesTable[i].miles / mpg);
 			this.state.netTaxableGallons[i] = this.state.taxableGallons[i] - this.state.taxPaidGallons[i];
 			this.state.taxCreditDue[i] = this.state.netTaxableGallons[i] * this.state.tableTaxRate[i];
 		}
@@ -37,9 +39,9 @@ class TaxTable extends Component{
 		let totalDue = this.state.taxCreditDue.reduce( (total, tax) => { return total += tax }, 0);
 		totalDue = totalDue.toFixed(2)*1;
 
-		this.setState({ totalDue });
-		this.setState({ mpg: ev.target.value });
-		//console.log('state after mpg update', this.state);
+		this.setState( { totalDue } );
+		this.setState( { mpg: mpg } );
+		// console.log('state after mpg update', this.state);
 	}
 
 	onTaxPaidGallonsAdd(ev){
@@ -73,7 +75,7 @@ class TaxTable extends Component{
 						<tr>
 							<th className="size">State</th>
 							<th className="size">IFTA miles</th>
-							<th className="size">MPG { ' ' } <input type="text" className="size" value={ this.state.mpg } onChange={ this.onMpgAdd }></input></th>
+							<th className="size">MPG { ' ' } <input type="text" style={{ minWidth: "25px" }} className="size" value={ this.state.mpg } onChange={ this.onMpgAdd }></input></th>
 							<th className="size">Taxable gallons</th>
 							<th className="size">Tax paid gallons</th>
 							<th className="size">Net taxable gallons</th>
@@ -101,7 +103,7 @@ class TaxTable extends Component{
 									</td>
 
 									<td id={ index } className="item">
-										{ stateMiles && this.state.mpg.length ? Number(stateMiles.miles/this.state.mpg).toFixed(2) : null }
+										{ stateMiles && this.state.mpg ? Number((stateMiles.miles/this.state.mpg).toFixed(2)) : null }
 									</td>
 
 									<td id="taxPaidGallons" className="item">
